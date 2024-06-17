@@ -1,50 +1,5 @@
-import {RadarIcon, VolumeIcon} from "lucide-react";
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-} from "chart.js";
-import {Line} from 'react-chartjs-2';
-import {faker} from "@faker-js/faker";
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-);
-
-export const options = {
-    responsive: true,
-    plugins: {
-        legend: {
-            position: 'top',
-            display: false,
-        },
-    },
-};
-
-const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-
-export const data = {
-    labels,
-    datasets: [
-        {
-            label: 'Decibel Values',
-            data: labels.map(() => faker.datatype.number({min: -1000, max: 1000})),
-            borderColor: 'rgb(53, 162, 235)',
-            backgroundColor: 'rgba(53, 162, 235, 0.5)',
-        },
-    ],
-};
+import {RadarIcon} from "lucide-react";
+import AudioChart from "/components/AudioChart/AudioChart.jsx";
 
 export default function SecTwo() {
     return (
@@ -67,20 +22,7 @@ export default function SecTwo() {
                         </div>
                     </div>
                     <div className="mx-auto max-w-5xl items-center gap-2 py-4 lg:gap-4 xl:gap-6">
-                        <div
-                            className="relative drop-shadow-lg mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last xl:rounded-2xl">
-                            <Line options={options} data={data}/>
-                            <div
-                                className="absolute top-4 right-4 bg-gray-900 text-gray-50 px-3 py-1 rounded-xl text-sm flex items-center gap-2">
-                                <VolumeIcon className="h-4 w-4"/>
-                                <span>Sound Level 1: 60 dB</span>
-                            </div>
-                            <div
-                                className="absolute top-14 right-4 bg-gray-900 text-gray-50 px-3 py-1 rounded-xl text-sm flex items-center gap-2">
-                                <VolumeIcon className="h-4 w-4"/>
-                                <span>Chatter 80%</span>
-                            </div>
-                        </div>
+                        <AudioChart/>
                         <div className="space-y-2 mt-4 lg:mt-6 xl:mt-8">
                             <div className="grid gap-2">
                                 <div className="flex flex-col items-center space-x-2">
