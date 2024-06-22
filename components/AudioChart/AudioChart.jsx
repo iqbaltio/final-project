@@ -1,5 +1,9 @@
 import {VolumeIcon} from "lucide-react";
+import { Chart as ChartJS, registerables } from 'chart.js/auto';
 import {Line} from 'react-chartjs-2';
+import {useState} from "react";
+
+ChartJS.register(...registerables);
 
 const labels = ['09.00', '11.00', '12.00', '13.00', '14.00', '15.00', '16.00'];
 
@@ -13,18 +17,6 @@ const data = {
             tension: 0.1
         },
     ],
-    options: {
-        scales: {
-            x: {
-                type: 'time',
-                time: {
-                    displayFormats: {
-                        quarter: 'MMM YYYY'
-                    }
-                }
-            }
-        }
-    }
 };
 
 const options = {
@@ -37,11 +29,35 @@ const options = {
             display: false,
         },
     },
+    options: {
+        scales: {
+            x: {
+                type: 'time',
+                time: {
+                    unit: 'hour',
+                    displayFormats: {
+                        hour: 'HH:mm'
+                    },
+                    min: '09:00',
+                    max: '16:00'
+                },
+                ticks: {
+                    source: 'auto',
+                    autoSkip: true
+                }
+            },
+            y: {
+                min: 0,
+                max: 100
+            }
+        }
+    }
 };
 
 export default function AudioChart() {
     let localDbValues = [];
-    let refresh_rate = 1000;
+    const [decibelValue, setDecibelValue] = useState([]);
+    let refresh_rate = 800;
 
     navigator.mediaDevices.getUserMedia({audio: true, video: false}).then((stream) => {
 
@@ -83,11 +99,12 @@ export default function AudioChart() {
         let volume = Math.round(localDbValues.reduce((a, b) => a + b, 0) / localDbValues.length);
         if (!isFinite(volume)) volume = 0;  // we don't want/need negative decibels in that case
         db.innerText = volume.toString();
+        setDecibelValue(volume);
         localDbValues = [];
 
         interval = window.setInterval(updateDb, refresh_rate);
     }
-    let interval = window.setInterval(updateDb, refresh_rate);
+    let interval = window.setInterval(updateDb, refresh_rate)
 
     return (
         <div className="mx-auto max-w-5xl items-center gap-2 py-4 lg:gap-4 xl:gap-6">
@@ -95,13 +112,12 @@ export default function AudioChart() {
                 className="relative drop-shadow-lg mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last xl:rounded-2xl">
                 <Line options={options} data={data}/>
                 <div
-                    className="absolute top-4 right-4 bg-gray-900 text-gray-50 px-3 py-1 rounded-xl text-sm flex items-center gap-2">
+                    className={`absolute top-4 right-8 px-3 py-1 rounded-xl text-sm flex items-center gap-2 ${decibelValue > 55 ? "bg-red-500" : "bg-gray-900"} text-gray-50`}>
                     <VolumeIcon className="h-4 w-4"/>
                     <span>Sound Level : <span id='db'> </span> dB</span>
-                    {/*<span>Sound Level : {decibelValue} dB</span>*/}
                 </div>
                 <div
-                    className="absolute top-14 right-4 bg-gray-900 text-gray-50 px-3 py-1 rounded-xl text-sm flex items-center gap-2">
+                    className={`absolute top-14 right-8 px-3 py-1 rounded-xl text-sm flex items-center gap-2 ${decibelValue > 55 ? "bg-red-500" : "bg-gray-900"} text-gray-50`}>
                     <VolumeIcon className="h-4 w-4"/>
                     <span>Chatter 80%</span>
                 </div>

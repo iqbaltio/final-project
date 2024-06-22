@@ -10,7 +10,7 @@ export default function App() {
     return (
         <>
             <div className="flex flex-col min-h-[100dvh]">
-                <header className="flex items-center h-16 px-4 shrink-0 md:px-6 lg:px-8 xl:px-10">
+                <header className="flex w-full items-center h-16 px-4 shrink-0 md:px-6 lg:px-8 xl:px-10 fixed backdrop-blur-md bg-opacity-50 bg-white z-50">
                     <Navbar/>
                 </header>
                 <SecOne/>
@@ -125,7 +125,7 @@ export default function App() {
                         </div>
                     </div>
                 </section>
-                <section className="w-full py-12 md:py-24 lg:py-32 xl:py-40 bg-gray-200 border-t" id="contact">
+                <section className="w-full py-12 md:py-8 lg:py-12 xl:py-16 bg-gray-200 border-t" id="contact">
                     <div
                         className="container grid items-center justify-center gap-4 px-4 text-center md:px-6 lg:px-8 xl:px-10">
                         <div className="space-y-3">
