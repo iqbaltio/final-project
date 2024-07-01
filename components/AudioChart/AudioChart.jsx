@@ -1,63 +1,75 @@
 import {VolumeIcon} from "lucide-react";
 import { Chart as ChartJS, registerables } from 'chart.js/auto';
 import {Line} from 'react-chartjs-2';
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import axios from "axios";
 
 ChartJS.register(...registerables);
 
-const labels = ['09.00', '11.00', '12.00', '13.00', '14.00', '15.00', '16.00'];
+// const labels = ['09.00', '11.00', '12.00', '13.00', '14.00', '15.00', '16.00'];
 
-const data = {
-    labels,
-    type: 'line',
-    datasets: [
-        {
-            label: 'Decibel Values',
-            data: [0, 10, 20, 30, 40,50, 60, 70, 80, 90, 100],
-            tension: 0.1
-        },
-    ],
-};
+// const data = {
+//     labels,
+//     type: 'line',
+//     datasets: [
+//         {
+//             label: 'Decibel Values',
+//             data: [0, 10, 20, 30, 40,50, 60, 70, 80, 90, 100],
+//             tension: 0.1
+//         },
+//     ],
+// };
 
-const options = {
-    responsive: true,
-    borderColor: 'rgb(53, 162, 235)',
-    backgroundColor: 'rgba(53, 162, 235, 0.5)',
-    plugins: {
-        legend: {
-            position: 'top',
-            display: false,
-        },
-    },
-    options: {
-        scales: {
-            x: {
-                type: 'time',
-                time: {
-                    unit: 'hour',
-                    displayFormats: {
-                        hour: 'HH:mm'
-                    },
-                    min: '09:00',
-                    max: '16:00'
-                },
-                ticks: {
-                    source: 'auto',
-                    autoSkip: true
-                }
-            },
-            y: {
-                min: 0,
-                max: 100
-            }
-        }
-    }
-};
+// const options = {
+//     responsive: true,
+//     borderColor: 'rgb(53, 162, 235)',
+//     backgroundColor: 'rgba(53, 162, 235, 0.5)',
+//     plugins: {
+//         legend: {
+//             position: 'top',
+//             display: false,
+//         },
+//     },
+//     options: {
+//         scales: {
+//             x: {
+//                 type: 'time',
+//                 time: {
+//                     unit: 'hour',
+//                     displayFormats: {
+//                         hour: 'HH:mm'
+//                     },
+//                     min: '09:00',
+//                     max: '16:00'
+//                 },
+//                 ticks: {
+//                     source: 'auto',
+//                     autoSkip: true
+//                 }
+//             },
+//             y: {
+//                 min: 0,
+//                 max: 100
+//             }
+//         }
+//     }
+// };
 
 export default function AudioChart() {
     let localDbValues = [];
     const [decibelValue, setDecibelValue] = useState([]);
     let refresh_rate = 800;
+    const [data, setData] = useState(null);
+
+    useEffect(() => {
+        axios.get('/api/retrieve-data')
+            .then(response => {
+                setData(response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching data: ', error);
+            });
+    }, []);
 
     navigator.mediaDevices.getUserMedia({audio: true, video: false}).then((stream) => {
 
@@ -103,8 +115,26 @@ export default function AudioChart() {
         localDbValues = [];
 
         interval = window.setInterval(updateDb, refresh_rate);
+
+        axios.post('/api/decibel', { decibel: setDecibelValue(volume) })
+            .then(response => console.log(response))
+            .catch(error => console.error(error));
+
     }
     let interval = window.setInterval(updateDb, refresh_rate)
+
+    const chartData = {
+        labels: data ? data.map(item => item.label) : [],
+        datasets: [
+            {
+                label: 'My Dataset',
+                data: data ? data.map(item => item.value) : [],
+                fill: false,
+                backgroundColor: 'rgb(75, 192, 192)',
+                borderColor: 'rgba(75, 192, 192, 0.2)',
+            },
+        ],
+    };
 
     return (
         <div className="mx-auto max-w-5xl items-center gap-2 py-4 lg:gap-4 xl:gap-6">
