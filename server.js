@@ -1,26 +1,49 @@
 import express from 'express';
 import pg from 'pg';
+import 'dotenv/config';
+import bodyParser from "body-parser";
+import cors from 'cors';
 
+const { Pool } = pg;
 const app = express();
-// eslint-disable-next-line no-undef
+app.use(cors({origin: 'http://localhost:5173'}));
+
+const pool = new Pool({
+    user: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
+    host: 'localhost',
+    port: 5432,
+    database: 'final'
+})
+
+pool.connect()
+    .then(() => console.log('Connected to database'))
+    .catch(err => console.error('Connection error', err.stack));
+
 const port = process.env.PORT || 5000;
-app.get('/api/data', (req, res) => {
-    // Handle your API logic here
-    res.json({ message: 'Hello from Express!' });
+
+app.use(bodyParser.json());
+
+app.get('/api/decibel', (req, res) => {
+    pool.query('SELECT * FROM decibel', (err, results) => {
+        if (!err) {
+            res.send(results.rows);
+        }
+    });
 });
 
-app.use(express.json());
+app.post('/api/record_decibel', (req, res) => {
+    const {decibel_value} = req.body
+    const now = new Date();
+    const formattedTime = now.getDate() + '-' + (now.getMonth() + 1) + '-' + now.getFullYear() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
 
-const pool = new pg.Pool({
-    // Your PostgreSQL configuration
-});
-
-app.post('/api/decibel', (req, res) => {
-    const { decibel } = req.body;
-
-    pool.query('INSERT INTO decibel_table (decibel) VALUES ($1)', [decibel])
-        .then(() => res.json({ message: 'Decibel value inserted successfully.' }))
-        .catch(error => res.status(500).json({ error: error.toString() }));
+    pool.query('INSERT INTO decibel (decibel_value, time) VALUES ($1, $2)', [decibel_value, formattedTime], (err) => {
+        if (!err) {
+            res.send('Successfully recorded decibel value');
+        } else {
+            res.status(500).send(err.message);
+        }
+    });
 });
 
 app.listen(port, () => {
