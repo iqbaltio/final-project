@@ -7,7 +7,7 @@ export default function SecThree() {
                 className="container grid items-center justify-center gap-4 px-4 text-center md:px-6 lg:px-8 xl:px-10 lg:gap-10 xl:gap-12">
                 <div className="space-y-3">
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
-                        What Our Customers Say
+                        Fitur Antap Platform
                     </h2>
                     <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-lg/relaxed xl:text-xl/relaxed dark:text-gray-400">
                         Hear from the people who have transformed their businesses with our IoT solution.

@@ -34,6 +34,10 @@ app.get('/api/decibel', (req, res) => {
 
 app.post('/api/record_decibel', (req, res) => {
     const {decibel_value} = req.body
+    if (decibel_value === undefined) {
+        return res.status(400).send('Decibel value is required');
+    }
+
     const now = new Date();
     const formattedTime = now.getDate() + '-' + (now.getMonth() + 1) + '-' + now.getFullYear() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
 

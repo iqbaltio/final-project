@@ -21,8 +21,27 @@ const options = {
 export default function AudioChart() {
     const [decibelValue, setDecibelValue] = useState(0);
     const chartRef = useRef(null);
-    const [chartData] = useState({
-        labels: ['09.00', '10.00', '11.00', '12.00', '13.00', '14.00', '15.00', '16.00'],
+
+    function TimeLabels() {
+        const startHour = 9;
+        const endHour = 16;
+        const intervalMinutes = 10;
+        let labels = [];
+
+        let currentTime = new Date();
+        currentTime.setHours(startHour, 0, 0, 0);
+
+        while (currentTime.getHours() < endHour || (currentTime.getHours() === endHour && currentTime.getMinutes() === 0)) {
+            let timeLabel = currentTime.toTimeString().split(' ')[0].substring(0, 5);
+            labels.push(timeLabel);
+            currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
+        }
+
+        return labels;
+    }
+
+    const [chartData, setChartData] = useState({
+        labels: TimeLabels(),
         datasets: [
             {
                 label: 'Decibel Values',
@@ -35,6 +54,7 @@ export default function AudioChart() {
     });
     let localDbValues = [];
     let refresh_rate = 10000;
+    let saving_rate = 600000;
 
     navigator.mediaDevices.getUserMedia({audio: true, video: false}).then((stream) => {
 
@@ -61,7 +81,6 @@ export default function AudioChart() {
                 rms += data[i] * data[i]
             }
             rms = Math.sqrt(rms / data.length);
-            // console.log("RMS: " + rms)
 
             let value = rms;
             localDbValues.push(value);
@@ -69,60 +88,64 @@ export default function AudioChart() {
     })
 
     let updateDb = useCallback(function () {
-        window.clearInterval(interval);
+        const currentTime = new Date();
+        const currentHour = currentTime.getHours();
 
+        if (currentHour >= 9 && currentHour <= 16) {
+            let volume = Math.round(localDbValues.reduce((a, b) => a + b, 0) / localDbValues.length);
+            if (!isFinite(volume)) volume = 0;
+            setDecibelValue(volume);
+            localDbValues = [];
+
+            setChartData(prevData => {
+                const newData = [...prevData.datasets[0].data, volume];
+                const newLabels = [...prevData.labels];
+                if (newData.length > 42) {
+                    newData.shift();
+                    newLabels.shift();
+                }
+                return {
+                    ...prevData,
+                    datasets: [{ ...prevData.datasets[0], data: newData }],
+                    labels: newLabels,
+                };
+            });
+        }
+    }, [localDbValues])
+
+    let updateDisplay = useCallback(function () {
+        const db = document.getElementById("db");
+        let volume = Math.round(localDbValues.reduce((a, b) => a + b, 0) / localDbValues.length);
+        if (!isFinite(volume)) volume = 0;
+        db.innerText = volume.toString();
+    }, [localDbValues]);
+
+    const saveDbToDatabase = useCallback(() => {
         const currentTime = new Date();
         const currentHour = currentTime.getHours();
 
         if (currentHour >= 9 && currentHour <= 16) {
             const db = document.getElementById("db");
-            let volume = Math.round(localDbValues.reduce((a, b) => a + b, 0) / localDbValues.length);
-            if (!isFinite(volume)) volume = 0;
-            db.innerText = volume.toString();
-            setDecibelValue(volume);
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-            localDbValues = [];
-
+            let volume = parseInt(db.innerText, 10);
             if (volume > 0) {
-                const postData = {
-                    decibel_value: volume,
-                };
+                const postData = { decibel_value: volume };
                 axios.post('http://localhost:5000/api/record_decibel', postData)
-                    .then(response => {
-                        console.log('Decibel value saved:', response.data);
-                    })
-                    .catch(error => {
-                        console.log('Error saving decibel value:', error);
-                    });
+                    .then(response => console.log('Decibel value saved:', response.data))
+                    .catch(error => console.log('Error saving decibel value:', error));
             }
         }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        interval = window.setInterval(updateDb, refresh_rate);
-
-    }, [chartData, refresh_rate])
+    }, []);
 
     useEffect(() => {
-        const interval = setInterval(updateDb, refresh_rate);
-        return () => clearInterval(interval);
-    }, [updateDb, refresh_rate]);
-
-    useEffect(() => {
-        if (chartRef.current) {
-            const chart = chartRef.current;
-            const newData = [...chart.data.datasets[0].data, decibelValue];
-            const newLabels = [...chart.data.labels,];
-            if (newData.length > 20) {
-                newData.shift();
-                newLabels.shift();
-            }
-            chart.data.datasets[0].data = newData;
-            chart.data.labels = newLabels;
-            chart.update();
-        }
-    }, [decibelValue]);
-
-    let interval = window.setInterval(updateDb, refresh_rate)
+        const interval = setInterval(updateDb, saving_rate);
+        const saveInterval = setInterval(saveDbToDatabase, saving_rate);
+        const displayInterval = setInterval(updateDisplay, refresh_rate);
+        return () => {
+            clearInterval(interval);
+            clearInterval(saveInterval);
+            clearInterval(displayInterval);
+        };
+    }, [updateDb, updateDisplay, saveDbToDatabase, refresh_rate, saving_rate]);
 
     return (
         <div className="mx-auto max-w-5xl items-center gap-2 py-4 lg:gap-4 xl:gap-6">
