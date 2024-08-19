@@ -2,6 +2,7 @@ import {VolumeIcon} from "lucide-react";
 import {Chart as ChartJS, registerables} from 'chart.js/auto';
 import {Line} from 'react-chartjs-2';
 import {useCallback, useEffect, useRef, useState} from "react";
+import PropTypes from 'prop-types';
 import axios from "axios";
 
 ChartJS.register(...registerables);
@@ -18,7 +19,7 @@ const options = {
     },
 };
 
-export default function AudioChart() {
+export default function AudioChart({setShowNotification}) {
     const [decibelValue, setDecibelValue] = useState(0);
     const chartRef = useRef(null);
 
@@ -53,7 +54,7 @@ export default function AudioChart() {
         ],
     });
     let localDbValues = [];
-    let refresh_rate = 10000;
+    let refresh_rate = 1000;
     let saving_rate = 600000;
 
     navigator.mediaDevices.getUserMedia({audio: true, video: false}).then((stream) => {
@@ -91,7 +92,7 @@ export default function AudioChart() {
         const currentTime = new Date();
         const currentHour = currentTime.getHours();
 
-        if (currentHour >= 9 && currentHour <= 16) {
+        if (currentHour >= 4 && currentHour <= 16) {
             let volume = Math.round(localDbValues.reduce((a, b) => a + b, 0) / localDbValues.length);
             if (!isFinite(volume)) volume = 0;
             setDecibelValue(volume);
@@ -106,7 +107,7 @@ export default function AudioChart() {
                 }
                 return {
                     ...prevData,
-                    datasets: [{ ...prevData.datasets[0], data: newData }],
+                    datasets: [{...prevData.datasets[0], data: newData}],
                     labels: newLabels,
                 };
             });
@@ -118,17 +119,18 @@ export default function AudioChart() {
         let volume = Math.round(localDbValues.reduce((a, b) => a + b, 0) / localDbValues.length);
         if (!isFinite(volume)) volume = 0;
         db.innerText = volume.toString();
+        return volume;
     }, [localDbValues]);
 
     const saveDbToDatabase = useCallback(() => {
         const currentTime = new Date();
         const currentHour = currentTime.getHours();
 
-        if (currentHour >= 9 && currentHour <= 16) {
+        if (currentHour >= 4 && currentHour <= 16) {
             const db = document.getElementById("db");
             let volume = parseInt(db.innerText, 10);
             if (volume > 0) {
-                const postData = { decibel_value: volume };
+                const postData = {decibel_value: volume};
                 axios.post('http://localhost:5000/api/record_decibel', postData)
                     .then(response => console.log('Decibel value saved:', response.data))
                     .catch(error => console.log('Error saving decibel value:', error));
@@ -140,12 +142,29 @@ export default function AudioChart() {
         const interval = setInterval(updateDb, saving_rate);
         const saveInterval = setInterval(saveDbToDatabase, saving_rate);
         const displayInterval = setInterval(updateDisplay, refresh_rate);
+
         return () => {
             clearInterval(interval);
             clearInterval(saveInterval);
             clearInterval(displayInterval);
         };
     }, [updateDb, updateDisplay, saveDbToDatabase, refresh_rate, saving_rate]);
+
+    useEffect(() => {
+        let timeout;
+        setInterval(() => {
+            const volume = updateDisplay();
+            if (volume >= 55) {
+                setShowNotification(true, {decibelValue: volume});
+                timeout = setTimeout(() => setShowNotification(false, null), 5000);
+            } else {
+                setShowNotification(false, null);
+            }
+        }, 5000);
+        return () => {
+            clearTimeout(timeout);
+        }
+    }, [decibelValue, setShowNotification, updateDisplay]);
 
     return (
         <div className="mx-auto max-w-5xl items-center gap-2 py-4 lg:gap-4 xl:gap-6">
@@ -166,3 +185,7 @@ export default function AudioChart() {
         </div>
     )
 }
+
+AudioChart.propTypes = {
+    setShowNotification: PropTypes.func.isRequired,
+};
