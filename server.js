@@ -2,11 +2,11 @@ import express from 'express';
 import pg from 'pg';
 import 'dotenv/config';
 import bodyParser from "body-parser";
-import cors from 'cors';
+// import cors from 'cors';
 
 const { Pool } = pg;
 const app = express();
-app.use(cors({origin: 'http://localhost:5173'}));
+// app.use(cors({origin: 'http://localhost:5173'}));
 
 // const pool = new Pool({
 //     user: process.env.DATABASE_USERNAME,
