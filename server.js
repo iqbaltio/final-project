@@ -24,7 +24,7 @@ pool.connect()
     .then(() => console.log('Connected to database'))
     .catch(err => console.error('Connection error', err.stack));
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
