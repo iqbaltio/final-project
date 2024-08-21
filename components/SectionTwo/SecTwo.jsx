@@ -1,8 +1,9 @@
 import {RadarIcon} from "lucide-react";
-import AudioChart from "/components/AudioChart/AudioChart.jsx";
+import History from "/components/HistoryTab/History.jsx";
+import {Card} from "/components/ui/card.jsx";
 import PropTypes from "prop-types";
 
-export default function SecTwo({ setShowNotification }) {
+export default function SecTwo({setShowNotification}) {
     return (
         <>
             <section className="w-full py-12 md:py-24 lg:py-32 xl:py-40 bg-gray-200 dark:bg-gray-800" id="sound-level">
@@ -23,7 +24,9 @@ export default function SecTwo({ setShowNotification }) {
                         </div>
                     </div>
                     <div className="mx-auto max-w-5xl items-center gap-2 py-4 lg:gap-4 xl:gap-6">
-                        <AudioChart setShowNotification={setShowNotification}/>
+                        <Card className="w-full rounded-xl overflow-auto bg-[#f0f0f0]">
+                            <History setShowNotification={setShowNotification}/>
+                        </Card>
                         <div className="space-y-2 mt-4 lg:mt-6 xl:mt-8">
                             <div className="grid gap-2">
                                 <div className="flex flex-col items-center space-x-2">

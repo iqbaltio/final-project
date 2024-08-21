@@ -5,3 +5,10 @@
 html {
   scroll-behavior: smooth;
 }
+
+.selected-tab[data-state="active"] {
+  background-color: #4A90E2;
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+}
